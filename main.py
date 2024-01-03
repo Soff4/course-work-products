@@ -122,7 +122,7 @@ print(f"\nСтандартне відхилення для вибраних да
 print(f"\nСтандартизовані вибрані дані:\n{standardized_data.iloc[:30]}")
 
 
-# 5
+# 5 зміни нові для нової гілки
 plt.figure(figsize=(10, 6))
 data = dataframe.iloc[:100, :]
 
