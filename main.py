@@ -8,221 +8,228 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Створення класу ProductAnalyze:
-# Визначений клас, який включає функціонал для аналізу продуктів.
-class ProductAnalyze:
-    def __init__(self, path):
-        # У цьому рядку коду відбувається виклик методу read_data(path) класу ProductAnalyze, який завантажує наші дані в self.df
-        self.df = self.read_data(path) 
+def read_data(path):
+    # Цей рядок завантажує дані з CSV-файлу за вказаним шляхом і встановлює колонку "productname" як індекс (індексуючи дані за назвою продукту).
+    df_buffer = pd.read_csv(path, index_col='productname')
+    # Ця операція використовує метод map для виконання функції lambda, яка видаляє символи '%' і '$' з кожного значення в DataFrame df_buffer. 
+    df_buffer = df_buffer.map(lambda x: x.strip("%$"))
+    # Повертає змінну df_buffer, яка містить змінені дані з CSV-файлу.
+    return df_buffer
+
+def rework_data(df):
+    # Перевіряє, чи існує стовпець з назвою 'averagespread' у DataFrame self.df.
+    if 'averagespread' in df.columns:
+        # Якщо стовпець 'averagespread' існує, цей рядок замінює коми у числових значеннях стовпця 'averagespread' на порожній рядок. 
+        # Це припускає, що значення у стовпці 'averagespread' можуть містити коми як роздільники тисяч, які потрібно видалити, щоб правильно інтерпретувати числові дані.
+        df['averagespread'] = df['averagespread'].replace(',', '', regex=True)
+
+    # Замінює всі порожні рядки у DataFrame на значення NaN (Not a Number).
+    df.replace('', np.nan, inplace=True)
+
+    # Визначає список стовпців, починаючи з другого стовпця, для подальшого перетворення на числовий тип.
+    cols_to_convert = df.columns[1:7]
+    # Конвертує значення у відповідних стовпцях DataFrame self.df в числовий тип даних (float). 
+    # Це припускає, що всі значення у цих стовпцях мають бути числовими, а метод astype(float) спробує конвертувати їх у відповідний числовий формат.
+    df[cols_to_convert] = df[cols_to_convert].astype(float)
+    df.loc[:, 'productname'] = df.index
     
-    def read_data(self, path):
-        # Цей рядок завантажує дані з CSV-файлу за вказаним шляхом і встановлює колонку "productname" як індекс (індексуючи дані за назвою продукту).
-        df_buffer = pd.read_csv(path, index_col='productname')
-        # Ця операція використовує метод map для виконання функції lambda, яка видаляє символи '%' і '$' з кожного значення в DataFrame df_buffer. 
-        df_buffer = df_buffer.map(lambda x: x.strip("%$"))
-        # Повертає змінну df_buffer, яка містить змінені дані з CSV-файлу.
-        return df_buffer
+    return df
 
-    def rework_data(self):
-        # Перевіряє, чи існує стовпець з назвою 'averagespread' у DataFrame self.df.
-        if 'averagespread' in self.df.columns:
-            # Якщо стовпець 'averagespread' існує, цей рядок замінює коми у числових значеннях стовпця 'averagespread' на порожній рядок. 
-            # Це припускає, що значення у стовпці 'averagespread' можуть містити коми як роздільники тисяч, які потрібно видалити, щоб правильно інтерпретувати числові дані.
-            self.df['averagespread'] = self.df['averagespread'].replace(',', '', regex=True)
+def clean_data(df):
+    if df.isnull().values.any():
+        # Пробує замінити всі пропущені значення у DataFrame на 0.0. 
+        # Однак без параметру inplace=True ця зміна не буде відображена у вихідних даних; можливо, варто додати inplace=True, щоб зберегти ці зміни в DataFrame self.df.
+        df.fillna(0.0, inplace=True)
 
-        # Замінює всі порожні рядки у DataFrame на значення NaN (Not a Number).
-        self.df.replace('', np.nan, inplace=True)
-        # Видаляє рядки, де всі значення (у всіх стовпцях) є NaN.
-        self.df.dropna(subset=self.df.columns, how='all', inplace=True)
+    return df
 
-        # Визначає список стовпців, починаючи з другого стовпця, для подальшого перетворення на числовий тип.
-        cols_to_convert = self.df.columns[1:]
-        # Конвертує значення у відповідних стовпцях DataFrame self.df в числовий тип даних (float). 
-        # Це припускає, що всі значення у цих стовпцях мають бути числовими, а метод astype(float) спробує конвертувати їх у відповідний числовий формат.
-        self.df[cols_to_convert] = self.df[cols_to_convert].astype(float)
-        self.df.loc[:, 'productname'] = self.df.index
+def output_data(df, num_rows):
+    # Вибирає перші num_rows рядків з DataFrame self.df та вибирає перші num_rows рядків з DataFrame self.df.
+    # В даному випадку відбувається одразу виведення вмісту (перших num_rows рядків) за допомогою функції print(). 
+    # Функція print() виводить результат методу self.df.head(num_rows) у консоль або інше місце виведення.
+     return print(df.head(num_rows))
 
-    def clean_data(self):
-        # Перевіряє, чи є пропущені значення у DataFrame self.df.
-        self.df = self.df.replace([np.inf, -np.inf], np.nan)
-        if self.df.isnull().values.any():
-            # Пробує замінити всі пропущені значення у DataFrame на 0.0. 
-            # Однак без параметру inplace=True ця зміна не буде відображена у вихідних даних; можливо, варто додати inplace=True, щоб зберегти ці зміни в DataFrame self.df.
-            self.df.fillna(0.0)
 
-    def output_data(self, num_rows):
-        # Вибирає перші num_rows рядків з DataFrame self.df та вибирає перші num_rows рядків з DataFrame self.df.
-        # В даному випадку відбувається одразу виведення вмісту (перших num_rows рядків) за допомогою функції print(). 
-        # Функція print() виводить результат методу self.df.head(num_rows) у консоль або інше місце виведення.
-        return print(self.df.head(num_rows))
 
-    def handler_plot(self, xlabel, ylabel, title, rot = 0):
-        # Встановлюють підписи для вісей x та y графіка відповідно, де xlabel і ylabel є аргументами, які передаються у функцію.
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        # Встановлює обертання міток на вісі x на заданий кут rot (за замовчуванням rot = 0, що означає горизонтальне положення міток).
-        plt.xticks(rotation=rot)
-        # Встановлює заголовок графіка, де title є аргументом, що передається у функцію.
-        plt.title(title)
-        # Відображає побудований графік у поточному вікні виведення.
-        plt.show()
+# 1
+# Створюємо зміну, яка буде носити шлях до нашого набору даних
+filepath = 'csv_data/ProductPriceIndex.csv'
 
-    def build_heatmap(self, data):
-        # Вибирає підмножину даних з DataFrame data. Зразок обмежений першими 10 рядками та стовпцями з 2 по 5 включно (індексація в Python починається з 0).
-        subset = data.iloc[:10, 2:6]
-        # Конвертує підмножину даних subset у масив NumPy.
-        subset_np = subset.to_numpy()
-        # Створює теплову карту (heatmap) за допомогою бібліотеки Seaborn. Використовує subset_np як дані для побудови. 
-        # Використовується колірна карта 'RdYlGn' (червона, жовта, зелена). 
-        # vmin та vmax встановлюють мінімальне та максимальне значення кольорової шкали відповідно.
-        # annot=True додає значення на теплову карту.
-        sns.heatmap(data=subset_np, cmap='RdYlGn', vmin=subset_np.min(), vmax=subset_np.max(), annot=True)
-        # Викликає метод handler_plot (який, ймовірно, встановлює підписи та показує графік) 
-        # з визначеними параметрами: 'Cities' для підпису осі x, 'Products, $' для підпису осі y і 'Retail Prices in Different Cities' для заголовка графіка. 
-        self.handler_plot('Cities', 'Products, $', 'Retail Prices in Different Cities')
+dataframe = read_data(path=filepath)
 
-    def build_lineplot(self):
-        # Вибирає перші 70 рядків з DataFrame self.df.
-        data = self.df.head(70)
-        # Створює лінійний графік за допомогою бібліотеки Seaborn. Використовує data як дані для побудови графіку, де змінна 'date' відповідає за ось x, а 'averagespread' - за ось y.
-        sns.lineplot(data=data, x='date', y='averagespread')
-        self.handler_plot('Date', 'Average Spread, %', 'Average Spread between Farm and Retail Prices by Date')
+# За допомогою функції output_data виводимо перші 15 рядків
+output_data(dataframe, 15)
 
-    def build_barplot(self):
-        # Вибирає перші 8 рядків з DataFrame self.df та показує залежність між назвами продуктів ('productname') на вісі x та цінами на фермі ('farmprice') на вісі y.
-        data = self.df.head(8)
-        sns.barplot(data=data, x='productname', y='farmprice')
-        self.handler_plot('Product Name', 'Farm Price, $', 'All products Farm Price by Product Name', rot=90)
 
-    def build_histplot(self):
-        # Створює гістограму за допомогою методу sns.histplot. Вибирає перші 70 рядків з DataFrame self.df та відображає розподіл середнього розбіження ('averagespread').
-        data = self.df.head(70)
-        sns.histplot(data=data, x='averagespread')
-        self.handler_plot('Average Spread', None, 'Average Spread, %')
+# 2
+# Для подальшої роботи з даними із набору, нам треба конвертувати певні стовпчики в інший тип даних, а також нам треба прибрати всі зайві знаки х набору.
+# В цьому нам допоможе метод rework_data()
+reworked_data = rework_data(df=dataframe)
 
-    def build_pairplot(self):
-        # Викликає sns.pairplot для побудови матриці діаграм розсіювання для DataFrame self.df, при цьому видаляються дублікати за колонкою 'date'. 
-        # Показує кореляції між різними параметрами.
-        sns.pairplot(data=self.df.drop_duplicates(subset='date', keep='first').reset_index())
-        plt.show()
+# За допомогою окремого методу, ми отримуємо статус про пусті рядки в наборі і виводимо цей статус.
+# Як ми бачимо, в стовпчиках farmprice, atlantaretail та newyorkretail є пусті значення. 
+# Це стає нам перешкодою у створенні певної статистики, побудові графіків і в подальших маніпуляціях.
+status = reworked_data.isnull().sum()
+print(f"До аналізу даних і заміни усіх NaN з допомогою fillna() / bfill(): \n{status}")
 
-    def build_replot(self):
-        # Використовує sns.relplot для побудови графіку розсіювання. 
-        # Оновлює певні колонки DataFrame за допомогою self.get_corr_pearson() та обмежує дані до унікальних значень за колонкою 'date'. 
-        # Графік показує залежність між цінами в Атланті ('atlantaretail') та Чикаго ('chicagoretail') за різні дати.
-        self.df.iloc[:, 2:6].update(self.get_corr_pearson())
-        data = self.df.drop_duplicates(subset=['date'])
-        data = data.head(30)
-        sns.relplot(data=data, x="date", y="atlantaretail", hue="chicagoretail", kind="scatter") 
-        self.handler_plot('Date', 'Retail Prices by Chicago', 'Pearson Method for Retail Prices Chicago', rot=90)
+# Для виправлення ситуації ми задіємо метод clean_data(), який отримує статус (чи існують пусті рядки, чи ні) і заповнює їх за допомогою fillna().
+cleaned_data = clean_data(df=reworked_data)
 
-    def build_faceitgrid(self, data, date_from, date_to, features):
-        # Створює сітку графіків за допомогою sns.FacetGrid. Побудовує графіки розсіювання для цін в Атланті в залежності від дати для кожного товару окремо.
-        data = self.df.head(30) # Регулювати кількість вхідних даних
-        data = data.loc[(data['date'] >= date_from) & (data['date'] <= date_to)]
-        data.reset_index(inplace=True)
-        grid = sns.FacetGrid(data, col="productname", hue="productname", col_wrap=5)
-        grid.map(sns.scatterplot, 'date', "atlantaretail", alpha=.8)
-        plt.xticks(rotation=90)
-        plt.show()
+# Знову отримуємо статус нашого набору даних і бачимо, що більше пустих значень не існує. 
+status = cleaned_data.isnull().sum()
+print(f"\n\nПісля аналізу даних і заміни усіх NaN з допомогою fillna(): \n{status}")
 
-    def get_mean(self):
-        # Обчислює середнє значення для числових даних, вибраних з колонок з індексами з 2 по 5 (включно) за допомогою .iloc[:, 2:6]. 
-        # Це знаходить середнє значення для кожної колонки у цьому діапазоні, а потім обчислює середнє середніх цих значень, використовуючи метод .mean().mean(). 
-        # Результат виводиться у форматі рядка із середнім значенням, округленим до двох знаків після коми.
-        return f"Mean: {self.df.iloc[:, 2:6].mean().mean():.2f}"
 
-    def get_variance(self):
-        # Обчислює дисперсію для числових даних, вибраних з колонок з індексами з 2 по 5 (включно) за допомогою .iloc[:, 2:6]. 
-        # Для кожної колонки обчислюється дисперсія, а потім обчислюється середнє значення цих дисперсій за допомогою .var().mean(). 
-        # Результат виводиться у форматі рядка із значенням дисперсії, округленим до двох знаків після коми.
-        return f"Variance: {self.df.iloc[:, 2:6].var().mean():.2f}"
+# 3
+dataframe = read_data(path=filepath)
+rew_data = rework_data(df=dataframe)
+cln_data = clean_data(df=rew_data)
 
-    def line_plot_annotations(self, date):
-        # Створення об'єктів фігури та вісей для побудови графіка.
-        fig, ax = plt.subplots()
-        # Вибір перших 50 рядків з DataFrame self.df.
-        data = self.df.head(50)
-        # Переіндексація даних. 
-        data.reset_index(inplace=True)
+print(f"Набір даних:\n\n")
+output_data(cln_data, 15)
 
-        # Цикл for column in ['farmprice', 'atlantaretail', 'chicagoretail', 'losangelesretail']: створює лінійний графік для кожного стовпця, використовуючи дані з колонок.
-        for column in ['farmprice','atlantaretail','chicagoretail','losangelesretail']:
-            filtered_data = data[data['date'] == date]
-            ax.plot(filtered_data['productname'], filtered_data[column], label=column)
-        # Додає легенду до графіка.
-        ax.legend()
 
-        # Обчислення середніх значень для кожного рядка.
-        # Використання цих середніх значень для додавання анотацій (ax.annotate) до відповідних точок на графіку (xy=(x, y)).
-        y_values = data[data.columns[2:]].mean().values
-        x_values = data['productname'].unique()
+# 4
+dataframe = cln_data
+select_df = dataframe.iloc[:10, 2:6]
 
-        for x,y in zip(x_values, y_values):  
-            ax.annotate(f"{y:.2f}", xy=(x,y), xytext=(5, 5), textcoords='offset points') 
+def highlight_max(s):
+    is_max = s == s.max()
+    return ['background-color: green' if v else '' for v in is_max]
+
+def highlight_min(s):  
+    is_min = s == s.min()
+    return ['background-color: red' if v else '' for v in is_min]
+
+styled_df = select_df.style.apply(highlight_max).apply(highlight_min)
+
+styled_df.format({'atlantaretail': '{:.2f}', 'chicagoretail': '{:.2f}', 'losangelesretail': '{:.2f}',  'newyorkretail': '{:.2f}'})
+
+styled_df
+
+
+# 4
+selected_data = dataframe.iloc[:, 2:6]
+
+mean_data = selected_data.mean()
+std_data = selected_data.std()
+variance_data = np.var(selected_data)
+standardized_data = (selected_data - mean_data) / std_data
+
+print(f"Математичне сподівання для вибраних даних:\n{mean_data}")
+print(f"\nДисперсія для вибраних даних:\n{variance_data}")
+print(f"\nСтандартне відхилення для вибраних даних:\n{std_data}")
+print(f"\nСтандартизовані вибрані дані:\n{standardized_data.iloc[:30]}")
+
+
+# 5
+plt.figure(figsize=(10, 6))
+data = dataframe.iloc[:100, :]
+
+sns.lineplot(data=data, x="date", y="averagespread", marker="o")
+
+plt.xlabel('Date')
+plt.ylabel('Average Spread, %')
+plt.title('Average Spread between Farm and Retail Prices by Date')
+plt.show()
+
+
+# 5
+plt.figure(figsize=(10, 6))
+data = dataframe.iloc[:50, :]
+
+sns.barplot(data=data, x='productname', y='farmprice')
+
+plt.xlabel('Product Name')
+plt.ylabel('Farm Price, $')
+plt.xticks(rotation=90)
+plt.title('All products Farm Price by Product Name')
+plt.show()
+
+
+# 5
+plt.figure(figsize=(10, 6))
+data = dataframe.iloc[:100, :]
+sns.histplot(data=data, x='averagespread', bins=20, kde=True)
+
+plt.xlabel('Average Spread')
+plt.title('Average Spread, %')
+plt.show()
+
+
+# 5
+df = dataframe.iloc[:, 2:6].corr()
+sns.heatmap(data=df, cmap='rocket', annot=True, linewidths=.2)
+plt.xlabel('Cities')
+plt.ylabel('Products, $')
+plt.xticks(rotation=90)
+plt.title('Retail Prices in Different Cities')
+plt.show()
+
+
+
+# 6
+fig, ax = plt.subplots()
+data = dataframe.head(300)
+
+for column in ['farmprice','atlantaretail','chicagoretail','losangelesretail']:
+    filtered_data = data[data['date'] == '2019-05-19']
+    ax.plot(filtered_data['productname'], filtered_data[column], label=column)
+
+ax.legend()
+
+y_values = data[data.columns[2:7]].mean().values
+x_values = data['productname'].unique()
+
+for x,y in zip(x_values, y_values):  
+    ax.annotate(f"{y:.2f}", xy=(x,y), xytext=(5, 5), textcoords='offset points') 
         
-        # Автоматичне масштабування графіка.
-        ax.autoscale()
-        # Поворот підписів осі x на 90 градусів
-        plt.xticks(rotation=90)
-        plt.show()
+ax.autoscale()
+plt.xticks(rotation=90)
+plt.show()
 
-    def remove_random_features(self, date_from, date_to):
-        max_corr = 0
-        rand_feature_a = rand_feature_b = None
-        
-        # Використовуються вкладені цикли for, щоб знайти пари ознак, які мають найбільшу абсолютну кореляцію між собою (за допомогою методу corr()).
-        # Пара ознак, які мають найбільшу кореляцію, зберігаються у змінних rand_feature_a і rand_feature_b.
-        for i in range(2, len(self.df.columns)):
-            for j in range(i + 1, len(self.df.columns)):
-                corr = self.df[self.df.columns[i]].corr(self.df[self.df.columns[j]], method='pearson')
 
-                if abs(corr) > max_corr:
-                    max_corr = abs(corr)
-                    rand_feature_a, rand_feature_b = self.df.columns[i], self.df.columns[j]
+# 6
+# Показує кореляції між різними параметрами.
+data = dataframe.iloc[:, 2:6]
+sns.pairplot(data=data, diag_kind="hist")
+plt.show()
 
-        # Створюється копія df_buffer DataFrame self.df.
-        df_buffer = self.df.copy()
 
-        # Для кожної з ознак, які мають найбільшу кореляцію, обирається випадковий піднабір рядків (10% від загальної кількості) і встановлюється їхні значення як np.nan.
-        for feature in [rand_feature_a, rand_feature_b]:
-            is_remove = np.random.choice(df_buffer.index, size=int(0.1 * len(df_buffer)), replace=False)
-            df_buffer.loc[is_remove, feature] = np.nan
+# 7
+df = dataframe
+corr_matrix = df.iloc[:, 2:6].corr()
 
-        # Викликає метод build_faceitgrid, передаючи оновлений DataFrame df_buffer та пару ознак (rand_feature_a і rand_feature_b). Цей метод, ймовірно, відповідає за побудову сітки графіків з використанням вказаних ознак.
-        self.build_faceitgrid(df_buffer, date_from, date_to, (rand_feature_a, rand_feature_b))
+max_corr = abs(corr_matrix.values[np.triu_indices_from(corr_matrix, 1)]).max()
+idx = np.where(abs(corr_matrix) == max_corr)
+max_corr_features = [corr_matrix.columns[idx[0][0]], corr_matrix.columns[idx[1][0]]]
+print('Ознаки з найбільшою кореляцією:', max_corr_features)
+print(corr_matrix)
 
-    def get_corr(self):
-        #  Цей метод обчислює кореляційну матрицю за методом за замовчуванням (зазвичай це метод Пірсона) для числових даних, 
-        # які вибрані з колонок з індексами від 2 до 5 (включно) за допомогою .iloc[:, 2:6].corr(). Результатом є матриця кореляції між цими колонками.
-        return self.df.iloc[:, 2:6].corr()
-    
-    def get_corr_pearson(self):
-        # Цей метод обчислює кореляційну матрицю за методом Пірсона для того самого підмножини даних 
-        # за допомогою .iloc[:, 2:6].corr(method='pearson'). Цей метод вказує явно використання методу Пірсона для обчислення кореляції.
-        return self.df.iloc[:, 2:6].corr(method='pearson')
+sns.relplot(x="averagespread", y=max_corr_features[0], data=df, hue="productname", palette="Set2", legend=True)
+sns.relplot(x="averagespread", y=max_corr_features[1], data=df, hue="productname", palette="Set2", legend=True)
+plt.show()
 
-# Основні маніпуляції
-file = 'csv_data/ProductPriceIndex.csv' # Ініціалізаця змінної, яка містить шлях до файлу датафрейму
-product = ProductAnalyze(path=file)  # Створення екземпляру класу (об'єкту), перадача змінної зі шляхом у конструктор
 
-product.clean_data() # Очищення даних
-product.rework_data() # Обробка даних
+# 8
+print("Початок: ", dataframe.isnull().sum())
+dataframe.dropna()
+dataframe.fillna(0.0)
+print("\nПісля: ",dataframe.isnull().sum())
 
-product.build_heatmap(data=product.df) # Побудова теплової карти на основі даних з DataFrame product.df
 
-print(product.get_mean()) # Отримання середнього значення числових даних
-print(product.get_variance()) # Отримання дисперсії числових даних
+# 9
+df_with_10 = df.drop(['productname'], axis=1)
+df_without_10 = df_with_10.iloc[np.random.choice(df_with_10.shape[0], round(df_with_10.shape[0] * 0.9))]
+print(df_without_10)
 
-product.build_lineplot() # Побудова лінійного графіку
-product.build_barplot() # Побудова стовпчатої діаграми
-product.build_histplot() # Побудова гістограми
-corr = product.get_corr() # Отримання кореляційної матриці
-product.build_heatmap(data=corr) # Побудова теплової карти для отриманої кореляційної матриці
+numeric_columns = df_with_10.select_dtypes(include=['float64']).columns
+df_with_10_numeric = df_with_10[numeric_columns]
+df_without_10_numeric = df_without_10[numeric_columns]
+print(df_without_10_numeric)
 
-product.line_plot_annotations('2019-05-19') # Побудова лінійного графіку з анотаціями
-product.build_pairplot() # Побудова матриці діаграм розсіювання
-
-product.build_replot() # Побудова графіку розсіювання з певними параметрами
-
-product.remove_random_features('2019-03-01', '2019-05-19') # Видалення випадкових ознак
+plt.scatter("atlantaretail", "chicagoretail", data=df_without_10_numeric.iloc[:100, :])
+plt.xlabel("atlantaretail")
+plt.ylabel("chicagoretail")
+plt.legend()
+plt.show()
