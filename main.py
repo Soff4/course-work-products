@@ -108,7 +108,7 @@ styled_df.format({'atlantaretail': '{:.2f}', 'chicagoretail': '{:.2f}', 'losange
 styled_df
 
 
-
+# зміна 1 для гілки 1
 # 4
 selected_data = dataframe.iloc[:, 2:6]
 
